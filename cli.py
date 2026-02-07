@@ -2,8 +2,6 @@ import sqlite3
 from string import Template
 from tabulate import tabulate 
 
-
-
 # executes sql queries by opening files. Used for fixed queries. Prints out the results. 
 def execute_sql(filename):    
     fd = open(filename, 'r')
@@ -11,11 +9,17 @@ def execute_sql(filename):
     fd.close()    
     sqlCommands = sqlFile.split(';')
     for command in sqlCommands:
-        result = c.execute(command)
-        rows = result.fetchall()
-        table = tabulate(rows, headers="keys", tablefmt="grid")
-        print(table)
-    main_menu()
+        c.execute(command)
+        
+        if c.description is not None:    
+            column_names = [description[0] for description in c.description]
+            rows = c.fetchall()
+            table = tabulate(rows, headers=column_names, tablefmt="grid")
+            print(table)
+            main_menu()
+        else:
+            print("The query did not return any results.")
+            main_menu()
     
 # Used to populate an empty database by running each SQL command in the database.sql file
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
@@ -34,16 +38,13 @@ def populate_database():
         except sqlite3.Error as e:
             print("Command Skipped: ", e)
 
-    
-            
-
 def flight_menu():
     print("\n Flight Menu")
     print("\n 1. View Upcoming Flights")
-    print("\n 2. Add a New Flight")
-    print("\n 3. Search for Flights")
-    print("\n 4. Remove a Flight")
-    print("\n 0. Return to Main Menu")
+    print(" 2. Add a New Flight")
+    print(" 3. Search for Flights")
+    print(" 4. Remove a Flight")
+    print(" 0. Return to Main Menu")
     
     menu_option = int(input("\nEnter menu option: "))
 
@@ -60,11 +61,11 @@ def flight_menu():
     
 def pilot_menu():
     print("\n Pilot Menu")
-    print("\n 1. View Pilot Roster")
-    print("\n 2. Search for a Pilot")
-    print("\n 3. Add a pilot")
-    print("\n 4. Remove a pilot")
-    print("\n 0. Return to Main Menu")
+    print(" 1. View Pilot Roster")
+    print(" 2. Search for a Pilot")
+    print(" 3. Add a pilot")
+    print(" 4. Remove a pilot")
+    print(" 0. Return to Main Menu")
     
     menu_option = int(input("\nEnter menu option: "))
 
@@ -81,11 +82,11 @@ def pilot_menu():
     
 def destination_menu():
     print("\n Destination Menu")
-    print("\n 1. View Destinations")
-    print("\n 2. Search for a Destination")
-    print("\n 3. Add a Destination")
-    print("\n 4. Remove a Destination")
-    print("\n 0. Return to Main Menu")
+    print(" 1. View Destinations")
+    print(" 2. Search for a Destination")
+    print(" 3. Add a Destination")
+    print(" 4. Remove a Destination")
+    print(" 0. Return to Main Menu")
     
     menu_option = input("\nEnter menu option: ")
     if menu_option == 1:
