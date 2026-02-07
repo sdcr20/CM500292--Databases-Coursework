@@ -1,4 +1,41 @@
 import sqlite3
+from string import Template
+from tabulate import tabulate 
+
+
+
+# executes sql queries by opening files. Used for fixed queries. Prints out the results. 
+def execute_sql(filename):    
+    fd = open(filename, 'r')
+    sqlFile = fd.read()
+    fd.close()    
+    sqlCommands = sqlFile.split(';')
+    for command in sqlCommands:
+        result = c.execute(command)
+        rows = result.fetchall()
+        table = tabulate(rows, headers="keys", tablefmt="grid")
+        print(table)
+    main_menu()
+    
+# Used to populate an empty database by running each SQL command in the database.sql file
+# Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
+def populate_database():
+    # opens and reads the sql file to a buffer
+    fd = open('database.sql', 'r')
+    sqlFile = fd.read()
+    fd.close()
+    # splits the file into the separate commands based on the ; 
+    sqlCommands = sqlFile.split(';')
+    # executes all the commands in sequence
+    for command in sqlCommands:
+        try:
+            c.execute(command)
+        # handles any errors
+        except sqlite3.Error as e:
+            print("Command Skipped: ", e)
+
+    
+            
 
 def flight_menu():
     print("\n Flight Menu")
@@ -63,28 +100,53 @@ def destination_menu():
         print("\n Invalid Input")
 
 def main_menu():
-    while True:
-        print("\n Welcome to the Flight Management Database")
-        print(" -----------------------------------------")
-        print(" Please select one of the following options")
-        print("\n1. Flights Menu")
-        print("2. Pilot Menu")
-        print("3. Destination Menu")
-        print("0. Exit")
+    print("\n Welcome to the Flight Management Database")
+    print(" -----------------------------------------")
+    print(" Please select one of the following options")
+    print("\n1. Flights Menu")
+    print("2. Pilot Menu")
+    print("3. Destination Menu")
+    print("4. Test")
+    print("0. Exit")
     
-        menu_option = int(input("\nEnter menu option: "))
+    menu_option = int(input("\nEnter menu option: "))
 
-        if menu_option == 1:
-            flight_menu()
-        elif menu_option == 2:
-            pilot_menu()
-        elif menu_option == 3:
-            destination_menu()  
-        elif menu_option == 0:
-            print("\nLogging Off...")
-            print("Goodbye")
-            exit(0)
-        else:
-            print("\n Invalid Input")
+    if menu_option == 1:
+        flight_menu()
+    elif menu_option == 2:
+        pilot_menu()
+    elif menu_option == 3:
+        destination_menu()  
+    elif menu_option == 0:
+        conn.close()
+        print("\nDatabase Connection Closed")
+        print("Logging Off...")
+        print("Goodbye\n")
+        exit(0)
+    elif menu_option == 4:
+        sqlfile = input("Enter filename: ")
+        execute_sql(sqlfile)
+    else:
+        print("\n Invalid Input")
+        main_menu()
 
-main_menu()
+try:
+    # Connects to the database
+    conn = sqlite3.connect('database.db')
+    print("\n Connecting to Database...")
+    c = conn.cursor()
+    # Checks whether the database is populated
+    c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = c.fetchall()
+    
+    # populates an empty database
+    if not tables:
+        print("Populating database")
+        populate_database()
+        print("Connected")
+        main_menu()
+    else:
+        print(" Connected")
+        main_menu()
+except sqlite3.DatabaseError:
+    print("Database error detected")
