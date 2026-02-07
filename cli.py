@@ -50,8 +50,7 @@ def destination_menu():
     print("\n 4. Remove a Destination")
     print("\n 0. Return to Main Menu")
     
-    menu_option = int(input("\nEnter menu option: "))
-
+    menu_option = input("\nEnter menu option: ")
     if menu_option == 1:
         flight_menu()
     elif menu_option == 2:
@@ -64,27 +63,28 @@ def destination_menu():
         print("\n Invalid Input")
 
 def main_menu():
-    print("\n Welcome to the Flight Management Database")
-    print(" -----------------------------------------")
-    print(" Please select one of the following options")
-    print("\n 1. Flights Menu")
-    print("\n 2. Pilot Menu")
-    print("\n 3. Destination Menu")
-    print("\n 0. Exit")
+    while True:
+        print("\n Welcome to the Flight Management Database")
+        print(" -----------------------------------------")
+        print(" Please select one of the following options")
+        print("\n1. Flights Menu")
+        print("2. Pilot Menu")
+        print("3. Destination Menu")
+        print("0. Exit")
     
-    menu_option = int(input("\nEnter menu option: "))
+        menu_option = int(input("\nEnter menu option: "))
 
-    if menu_option == 1:
-        flight_menu()
-    elif menu_option == 2:
-        pilot_menu()
-    elif menu_option == 3:
-        destination_menu()  
-    elif menu_option == 0:
-        print("\nLogging Off...")
-        print("Goodbye")
-        exit(0)
-    else:
-        print("\n Invalid Input")
+        if menu_option == 1:
+            flight_menu()
+        elif menu_option == 2:
+            pilot_menu()
+        elif menu_option == 3:
+            destination_menu()  
+        elif menu_option == 0:
+            print("\nLogging Off...")
+            print("Goodbye")
+            exit(0)
+        else:
+            print("\n Invalid Input")
 
 main_menu()
