@@ -29,14 +29,13 @@ def populate_database():
     sqlFile = fd.read()
     fd.close()
     # splits the file into the separate commands based on the ; 
-    sqlCommands = sqlFile.split(';')
+    
     # executes all the commands in sequence
-    for command in sqlCommands:
-        try:
-            c.execute(command)
+    try:
+        c.executescript(sqlFile)
         # handles any errors
-        except sqlite3.Error as e:
-            print("Command Skipped: ", e)
+    except sqlite3.Error as e:
+        print("Command Skipped: ", e)
 
 def flight_menu():
     print("\n Flight Menu")
@@ -133,7 +132,7 @@ def main_menu():
 
 try:
     # Connects to the database
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('CM500292--Databases-Coursework\database.db')
     print("\n Connecting to Database...")
     c = conn.cursor()
     # Checks whether the database is populated
