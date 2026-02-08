@@ -25,7 +25,7 @@ def execute_sql(filename):
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
 def populate_database():
     # opens and reads the sql file to a buffer
-    fd = open('database.sql', 'r')
+    fd = open('CM500292--Databases-Coursework\database.sql', 'r')
     sqlFile = fd.read()
     fd.close()
     # splits the file into the separate commands based on the ; 
