@@ -7,10 +7,8 @@ def execute_sql(filename):
     fd = open(filename, 'r')
     sqlFile = fd.read()
     fd.close()    
-    sqlCommands = sqlFile.split(';')
-    for command in sqlCommands:
-        c.execute(command)
-        
+    try: 
+        c.execute(sqlFile)        
         if c.description is not None:    
             column_names = [description[0] for description in c.description]
             rows = c.fetchall()
@@ -20,6 +18,8 @@ def execute_sql(filename):
         else:
             print("The query did not return any results.")
             main_menu()
+    except sqlite3.Error as e:
+        print("Query error: ", e) 
     
 # Used to populate an empty database by running each SQL command in the database.sql file
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
@@ -27,9 +27,7 @@ def populate_database():
     # opens and reads the sql file to a buffer
     fd = open('CM500292--Databases-Coursework\database.sql', 'r')
     sqlFile = fd.read()
-    fd.close()
-    # splits the file into the separate commands based on the ; 
-    
+    fd.close()  
     # executes all the commands in sequence
     try:
         c.executescript(sqlFile)
@@ -69,7 +67,7 @@ def pilot_menu():
     menu_option = int(input("\nEnter menu option: "))
 
     if menu_option == 1:
-        flight_menu()
+        execute_sql("queries/pilot_roster.sql")
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
@@ -132,7 +130,7 @@ def main_menu():
 
 try:
     # Connects to the database
-    conn = sqlite3.connect('CM500292--Databases-Coursework\database.db')
+    conn = sqlite3.connect('database.db')
     print("\n Connecting to Database...")
     c = conn.cursor()
     # Checks whether the database is populated
