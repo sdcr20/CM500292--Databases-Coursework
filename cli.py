@@ -14,10 +14,8 @@ def execute_sql(filename):
             rows = c.fetchall()
             table = tabulate(rows, headers=column_names, tablefmt="grid")
             print(table)
-            main_menu()
         else:
             print("The query did not return any results.")
-            main_menu()
     except sqlite3.Error as e:
         print("Query error: ", e) 
     
@@ -46,6 +44,7 @@ def flight_menu():
     menu_option = int(input("\nEnter menu option: "))
 
     if menu_option == 1:
+        execute_sql("queries/all_flight.sql")
         flight_menu()
     elif menu_option == 2:
         pilot_menu()
@@ -85,9 +84,10 @@ def destination_menu():
     print(" 4. Remove a Destination")
     print(" 0. Return to Main Menu")
     
-    menu_option = input("\nEnter menu option: ")
+    menu_option = int(input("\nEnter menu option: "))
     if menu_option == 1:
-        flight_menu()
+        execute_sql("queries/destinations.sql")
+        destination_menu()
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
