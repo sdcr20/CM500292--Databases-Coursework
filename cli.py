@@ -1,6 +1,56 @@
 import sqlite3
 from string import Template
 from tabulate import tabulate 
+from datetime import datetime
+
+def add_pilot():
+    name = input("Enter pilot name: ")
+    while True:
+        licence_number = input("Enter licence number: ")
+        try:
+            licence_number = int(licence_number)
+            break
+        except ValueError:
+            print("Licence Number must be a number.")
+            
+    aircraft_rating = input("Enter aircraft rating: ")
+    while True:
+        base_id = input("Enter base ID: ")
+        try:
+            base_id = int(base_id)
+            break
+        except:
+            print("Base ID must be a number.")
+    while True:
+        last_medical_date = input("Enter date of last medical in the format YYYY-MM-DD.")
+        format = "%Y-%m-%d"
+        try:
+            datetime.strptime(last_medical_date, format)
+            break
+        except:
+            print("Ensure date is in the format: YYYY-MM-DD")
+            
+    print("\nPlease review your input below.")
+    txt = f"Name: {name}\nLicence Number: {licence_number}\nAircraft Rating: {aircraft_rating}\nBase ID: {base_id}\nLast Medical Date: {last_medical_date}"
+    print(txt)    
+    while True:
+        print("Press 1 to add the new pilot to the database")
+        print("Press 2 to cancel the database entry:")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                main_menu()
+                break
+            elif menu_option == 2:
+                print("\n Transaction Cancelled.")
+                pilot_menu()
+                break
+            else:
+                print("Invalid input, try again")
+        except ValueError:
+            print("Invalid input, try again.")
+    
+
 
 # executes sql queries by opening files. Used for fixed queries. Prints out the results. 
 def execute_sql(filename):    
@@ -23,7 +73,7 @@ def execute_sql(filename):
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
 def populate_database():
     # opens and reads the sql file to a buffer
-    fd = open('CM500292--Databases-Coursework\database.sql', 'r')
+    fd = open('database.sql', 'r')
     sqlFile = fd.read()
     fd.close()  
     # executes all the commands in sequence
@@ -31,7 +81,7 @@ def populate_database():
         c.executescript(sqlFile)
         # handles any errors
     except sqlite3.Error as e:
-        print("Command Skipped: ", e)
+        print("Population Error: ", e)
 
 def flight_menu():
     print("\n Flight Menu")
@@ -70,7 +120,7 @@ def pilot_menu():
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
-        destination_menu()  
+        add_pilot()  
     elif menu_option == 0:
         main_menu()
     else:
