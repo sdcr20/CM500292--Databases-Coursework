@@ -1,1 +1,1 @@
-DELETE FROM pilot WHERE pilot_id = ?
+DELETE FROM pilot WHERE pilot_id = ?;

@@ -166,13 +166,75 @@ def flight_menu():
         execute_sql("all_flight.sql")
         flight_menu()
     elif menu_option == 2:
-        pilot_menu()
+        add_flight()
     elif menu_option == 3:
         destination_menu()  
     elif menu_option == 0:
         main_menu()
     else:
         print("\n Invalid Input")
+        
+def add_flight():
+    number = input("Enter flight number: ")
+    execute_sql("destinations.sql")
+    while True:
+        departure_id = int(input("Enter departure airport ID: "))
+        try:
+            departure_id = int(departure_id)
+            break
+        except:
+            print("Departure ID must be a number.")
+    while True:
+        arrival_id = int(input("Enter arrival airport ID: "))
+        try:
+            arrival_id = int(arrival_id)
+            break
+        except:
+            print("Arrival ID must be a number.")
+    execute_sql("pilot_roster.sql")
+    pilot_id = input("Enter the Pilot ID of the pilot: ")
+    try:
+        pilot_id = int(pilot_id)
+    except ValueError:
+            print("Pilot ID must be a number.")
+    execute_param_sql("pilot_id.sql", (pilot_id,))
+    while True:
+        departure_date_utc = input("Enter departure date and time in the format yyyy-mm-dd hh-mm-ss")
+        format = "%Y-%m-%d %H:%M:%S"
+        try:
+            datetime.strptime(departure_date_utc, format)
+            break
+        except:
+            print("Ensure date is in the format: YYYY-MM-DD HH:MM:SS")
+    while True:
+        arrival_date_utc = input("Enter arrival date and time in the format yyyy-mm-dd hh-mm-ss")
+        format = "%Y-%m-%d %H:%M:%S"
+        try:
+            datetime.strptime(arrival_date_utc, format)
+            break
+        except:
+            print("Ensure date is in the format: YYY-MM-DD HH:MM:SS")
+    print("\nPlese review your input below.")    
+    txt = f"Flight Number: {number}\nDeparture Airport: {departure_id}\nArrival Aiport: {arrival_id}\nPilot ID: {pilot_id}\nDeparture time: {departure_date_utc}\nArrival time: {arrival_date_utc}"
+    params = (number, departure_id, arrival_id, pilot_id, departure_date_utc, arrival_date_utc)
+    print(txt)
+    while True:
+        print("Press 1 to add the new flight to the database")
+        print("Press 2 to cancel the database entry:")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                execute_alter_sql("add_flight.sql", params)
+                flight_menu()
+                break
+            elif menu_option == 2:
+                print("\n Transaction Cancelled.")
+                flight_menu()
+                break
+            else:
+                print("Invalid input, try again")
+        except ValueError:
+            print("Invalid input, try again.")
     
 
     
@@ -191,7 +253,9 @@ def destination_menu():
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
-        add_destination()  
+        add_destination()
+    elif menu_option == 4:
+        delete_airport() 
     elif menu_option == 0:
         main_menu()
     else:
@@ -225,6 +289,35 @@ def add_destination():
                 print("Invalid input, try again.")
         except ValueError:
             print("Invalid input, try again.")
+            
+def delete_airport():
+    execute_sql("destinations.sql")
+    delete_id = input("Enter the Destination ID of the destination you wish to delete: ")
+    try:
+        delete_id = int(delete_id)
+    except ValueError:
+            print("Destination ID must be a number.")
+    execute_param_sql("destination_id.sql", (delete_id,))
+    print("\n Is this the destination you want to delete?")
+    while True:
+        print("If yes select 1")
+        print("If no press 2")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                execute_alter_sql("delete_destination.sql", (delete_id,))
+                print("Destination deleted")
+                destination_menu()
+                break
+            elif menu_option == 2:
+                print("\n Transaction Cancelled.")
+                destination_menu()
+                break
+            else:
+                print("Invalid input, try again")
+        except ValueError:
+            print("Invalid input, try again.")
+    
 
 def main_menu():
     print("\n Welcome to the Flight Management Database")

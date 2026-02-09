@@ -1,0 +1,1 @@
+DELETE FROM destination WHERE destination_id = ?;
