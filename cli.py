@@ -15,6 +15,44 @@ def load_sql(sql_dir: Path, filename: str) -> str:
     path = sql_dir / filename
     return path.read_text().strip()
 
+# executes sql queries by opening files. Used for fixed queries. Prints out the results. 
+def execute_sql(filename):    
+    sql = load_sql(QUERIES_DIR, filename)   
+    try: 
+        c.execute(sql)        
+        if c.description is not None:    
+            column_names = [description[0] for description in c.description]
+            rows = c.fetchall()
+            table = tabulate(rows, headers=column_names, tablefmt="grid")
+            print(table)
+        else:
+            print("The query did not return any results.")
+    except sqlite3.Error as e:
+        print("Query error: ", e)
+
+def execute_param_sql(filename, param):
+    sql = load_sql(QUERIES_DIR, filename)   
+    try: 
+        c.execute(sql, param)        
+        if c.description is not None:    
+            column_names = [description[0] for description in c.description]
+            rows = c.fetchall()
+            table = tabulate(rows, headers=column_names, tablefmt="grid")
+            print(table)
+        else:
+            print("The query did not return any results.")
+    except sqlite3.Error as e:
+        print("Query error: ", e)
+
+def execute_alter_sql(filename, params):
+    sql = load_sql(ALTERS_DIR, filename)
+    try:
+        c.execute(sql, params)
+        c.connection.commit()
+    except sqlite3.Error as e:
+        print("Input error: ", e)
+        raise
+
 def add_pilot():
     name = input("Enter pilot name: ")
     while True:
@@ -63,33 +101,35 @@ def add_pilot():
         except ValueError:
             print("Invalid input, try again.")
     
-
-
-# executes sql queries by opening files. Used for fixed queries. Prints out the results. 
-def execute_sql(filename):    
-    sql = load_sql(QUERIES_DIR, filename)   
-    try: 
-        c.execute(sql)        
-        if c.description is not None:    
-            column_names = [description[0] for description in c.description]
-            rows = c.fetchall()
-            table = tabulate(rows, headers=column_names, tablefmt="grid")
-            print(table)
-        else:
-            print("The query did not return any results.")
-    except sqlite3.Error as e:
-        print("Query error: ", e)
-
-
-
-def execute_alter_sql(filename, params):
-    sql = load_sql(ALTERS_DIR, filename)
+def delete_pilot():
+    delete_id = input("Enter the Pilot ID of the pilot you wish to delete: ")
     try:
-        c.execute(sql, params)
-        c.connection.commit()
-    except sqlite3.Error as e:
-        print("Input error: ", e)
-        raise
+        delete_id = int(delete_id)
+    except ValueError:
+            print("Pilot ID must be a number.")
+    execute_param_sql("pilot_id.sql", (delete_id,))
+    print("\n Is this the pilot you want to delete?")
+    while True:
+        print("If yes select 1")
+        print("If no press 2")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                execute_alter_sql("delete_pilot.sql", (delete_id,))
+                print("Pilot deleted")
+                pilot_menu()
+                break
+            elif menu_option == 2:
+                print("\n Transaction Cancelled.")
+                pilot_menu()
+                break
+            else:
+                print("Invalid input, try again")
+        except ValueError:
+            print("Invalid input, try again.")
+    
+
+
         
          
     
@@ -118,7 +158,7 @@ def flight_menu():
     menu_option = int(input("\nEnter menu option: "))
 
     if menu_option == 1:
-        execute_sql("CM500292--Databases-Coursework\queries\all_flight.sql")
+        execute_sql("all_flight.sql")
         flight_menu()
     elif menu_option == 2:
         pilot_menu()
@@ -145,7 +185,9 @@ def pilot_menu():
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
-        add_pilot()  
+        add_pilot()
+    elif menu_option == 4:
+        delete_pilot()  
     elif menu_option == 0:
         main_menu()
     else:
@@ -161,7 +203,7 @@ def destination_menu():
     
     menu_option = int(input("\nEnter menu option: "))
     if menu_option == 1:
-        execute_sql("CM500292--Databases-Coursework\queries\destinations.sql")
+        execute_sql("destinations.sql")
         destination_menu()
     elif menu_option == 2:
         pilot_menu()

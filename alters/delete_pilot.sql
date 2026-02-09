@@ -1,0 +1,1 @@
+DELETE FROM pilot WHERE pilot_id = ?
