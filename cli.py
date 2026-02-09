@@ -65,21 +65,31 @@ def pilot_menu():
     print(" 4. Remove a pilot")
     print(" 0. Return to Main Menu")
     
-    menu_option = int(input("\nEnter menu option: "))
-
-    if menu_option == 1:
-        execute_sql("pilot_roster.sql")
-        pilot_menu()
-    elif menu_option == 2:
-        pilot_menu()
-    elif menu_option == 3:
-        add_pilot()
-    elif menu_option == 4:
-        delete_pilot()  
-    elif menu_option == 0:
-        main_menu()
-    else:
-        print("\n Invalid Input")
+    while True:
+        try:
+            menu_option = int(input("\nEnter menu option: "))
+            break
+        except ValueError:
+            print("Invalid Input")
+    while True:
+        if menu_option == 1:
+            execute_sql("pilot_roster.sql")
+            pilot_menu()
+            break
+        elif menu_option == 2:
+            pilot_menu()
+            break
+        elif menu_option == 3:
+            add_pilot()
+            break
+        elif menu_option == 4:
+            delete_pilot()
+            break  
+        elif menu_option == 0:
+            main_menu()
+            break
+        else:
+            print("\n Invalid Input")
 
 def add_pilot():
     name = input("Enter pilot name: ")
@@ -164,22 +174,32 @@ def flight_menu():
     print(" 4. Remove a Flight")
     print(" 0. Return to Main Menu")
     
-    menu_option = int(input("\nEnter menu option: "))
-
-    if menu_option == 1:
-        execute_sql("all_flight.sql")
-        flight_menu()
-    elif menu_option == 2:
-        add_flight()
-    elif menu_option == 3:
-        destination_menu()
-    elif menu_option == 4:
-        delete_flight()
-    elif menu_option == 0:
-        main_menu()
-    else:
-        print("\n Invalid Input")
-        
+    while True:
+        try:
+            menu_option = int(input("\nEnter menu option: "))
+            break
+        except ValueError:
+            print("Invalid Input")
+    while True:
+        if menu_option == 1:
+            execute_sql("all_flight.sql")
+            flight_menu()
+            break
+        elif menu_option == 2:
+            add_flight()
+            break
+        elif menu_option == 3:
+            destination_menu()
+            break
+        elif menu_option == 4:
+            delete_flight()
+            break
+        elif menu_option == 0:
+            main_menu()
+            break
+        else:
+            print("\n Invalid Input")
+            
 def add_flight():
     number = input("Enter flight number: ")
     execute_sql("destinations.sql")
@@ -280,20 +300,31 @@ def destination_menu():
     print(" 4. Remove a Destination")
     print(" 0. Return to Main Menu")
     
-    menu_option = int(input("\nEnter menu option: "))
-    if menu_option == 1:
-        execute_sql("destinations.sql")
-        destination_menu()
-    elif menu_option == 2:
-        pilot_menu()
-    elif menu_option == 3:
-        add_destination()
-    elif menu_option == 4:
-        delete_destination() 
-    elif menu_option == 0:
-        main_menu()
-    else:
-        print("\n Invalid Input")
+    while True:
+        try:
+            menu_option = int(input("\nEnter menu option: "))
+            break
+        except ValueError:
+            print("Invalid Input")
+    while True:
+        if menu_option == 1:
+            execute_sql("destinations.sql")
+            destination_menu()
+            break
+        elif menu_option == 2:
+            pilot_menu()
+            break
+        elif menu_option == 3:
+            add_destination()
+            break
+        elif menu_option == 4:
+            delete_destination()
+            break 
+        elif menu_option == 0:
+            main_menu()
+            break
+        else:
+            print("\n Invalid Input")
         
 def add_destination():
     name = input("Enter airport name: ")
@@ -363,26 +394,35 @@ def main_menu():
     print("4. Test")
     print("0. Exit")
     
-    menu_option = int(input("\nEnter menu option: "))
-
-    if menu_option == 1:
-        flight_menu()
-    elif menu_option == 2:
-        pilot_menu()
-    elif menu_option == 3:
-        destination_menu()  
-    elif menu_option == 0:
-        conn.close()
-        print("\nDatabase Connection Closed")
-        print("Logging Off...")
-        print("Goodbye\n")
-        exit(0)
-    elif menu_option == 4:
-        sqlfile = input("Enter filename: ")
-        execute_sql(sqlfile)
-    else:
-        print("\n Invalid Input")
-        main_menu()
+    while True:
+        try:
+            menu_option = int(input("\nEnter menu option: "))
+            break
+        except ValueError:
+            print("Invalid Input")
+    while True:
+        if menu_option == 1:
+            flight_menu()
+            break
+        elif menu_option == 2:
+            pilot_menu()
+            break
+        elif menu_option == 3:
+            destination_menu()
+            break  
+        elif menu_option == 0:
+            conn.close()
+            print("\nDatabase Connection Closed")
+            print("Logging Off...")
+            print("Goodbye\n")
+            exit(0)
+        elif menu_option == 4:
+            sqlfile = input("Enter filename: ")
+            execute_sql(sqlfile)
+            break
+        else:
+            print("\n Invalid Input")
+            main_menu()
 
 # Used to populate an empty database by running each SQL command in the database.sql file
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
