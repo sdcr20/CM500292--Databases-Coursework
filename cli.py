@@ -15,6 +15,10 @@ def load_sql(sql_dir: Path, filename: str) -> str:
     path = sql_dir / filename
     return path.read_text().strip()
 
+def load_db(db_dir: Path, filename: str) -> str:
+    path = db_dir / filename
+    return path.read_text().strip()
+
 # executes sql queries by opening files. Used for fixed queries. Prints out the results. 
 def execute_sql(filename):    
     sql = load_sql(QUERIES_DIR, filename)   
@@ -255,7 +259,7 @@ def destination_menu():
     elif menu_option == 3:
         add_destination()
     elif menu_option == 4:
-        delete_airport() 
+        delete_destination() 
     elif menu_option == 0:
         main_menu()
     else:
@@ -290,7 +294,7 @@ def add_destination():
         except ValueError:
             print("Invalid input, try again.")
             
-def delete_airport():
+def delete_destination():
     execute_sql("destinations.sql")
     delete_id = input("Enter the Destination ID of the destination you wish to delete: ")
     try:
@@ -364,7 +368,7 @@ def populate_database():
 
 try:
     # Connects to the database
-    conn = sqlite3.connect('CM500292--Databases-Coursework\database.db')
+    conn = sqlite3.connect('database.db')
     print("\n Connecting to Database...")
     c = conn.cursor()
     # Checks whether the database is populated
