@@ -1,7 +1,19 @@
 import sqlite3
-from string import Template
 from tabulate import tabulate 
 from datetime import datetime
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+QUERIES_DIR = BASE_DIR / "queries"
+ALTERS_DIR = BASE_DIR / "alters"
+
+class DuplicateLicenceNumberException:
+    """Raised when a licence number already exists"""
+    pass
+
+def load_sql(sql_dir: Path, filename: str) -> str:
+    path = sql_dir / filename
+    return path.read_text().strip()
 
 def add_pilot():
     name = input("Enter pilot name: ")
@@ -32,6 +44,7 @@ def add_pilot():
             
     print("\nPlease review your input below.")
     txt = f"Name: {name}\nLicence Number: {licence_number}\nAircraft Rating: {aircraft_rating}\nBase ID: {base_id}\nLast Medical Date: {last_medical_date}"
+    params = (name, licence_number, aircraft_rating, base_id, last_medical_date)
     print(txt)    
     while True:
         print("Press 1 to add the new pilot to the database")
@@ -39,7 +52,7 @@ def add_pilot():
         try:
             menu_option = int(input("Enter choice: "))
             if menu_option == 1:
-                main_menu()
+                execute_alter_sql("add_pilot.sql", params)
                 break
             elif menu_option == 2:
                 print("\n Transaction Cancelled.")
@@ -54,11 +67,9 @@ def add_pilot():
 
 # executes sql queries by opening files. Used for fixed queries. Prints out the results. 
 def execute_sql(filename):    
-    fd = open(filename, 'r')
-    sqlFile = fd.read()
-    fd.close()    
+    sql = load_sql(QUERIES_DIR, filename)   
     try: 
-        c.execute(sqlFile)        
+        c.execute(sql)        
         if c.description is not None:    
             column_names = [description[0] for description in c.description]
             rows = c.fetchall()
@@ -67,13 +78,26 @@ def execute_sql(filename):
         else:
             print("The query did not return any results.")
     except sqlite3.Error as e:
-        print("Query error: ", e) 
+        print("Query error: ", e)
+
+
+
+def execute_alter_sql(filename, params):
+    sql = load_sql(ALTERS_DIR, filename)
+    try:
+        c.execute(sql, params)
+        c.connection.commit()
+    except sqlite3.Error as e:
+        print("Input error: ", e)
+        raise
+        
+         
     
 # Used to populate an empty database by running each SQL command in the database.sql file
 # Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
 def populate_database():
     # opens and reads the sql file to a buffer
-    fd = open('database.sql', 'r')
+    fd = open('CM500292--Databases-Coursework\database.db', 'r')
     sqlFile = fd.read()
     fd.close()  
     # executes all the commands in sequence
@@ -94,7 +118,7 @@ def flight_menu():
     menu_option = int(input("\nEnter menu option: "))
 
     if menu_option == 1:
-        execute_sql("queries/all_flight.sql")
+        execute_sql("CM500292--Databases-Coursework\queries\all_flight.sql")
         flight_menu()
     elif menu_option == 2:
         pilot_menu()
@@ -116,7 +140,8 @@ def pilot_menu():
     menu_option = int(input("\nEnter menu option: "))
 
     if menu_option == 1:
-        execute_sql("queries/pilot_roster.sql")
+        execute_sql("pilot_roster.sql")
+        pilot_menu()
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
@@ -136,7 +161,7 @@ def destination_menu():
     
     menu_option = int(input("\nEnter menu option: "))
     if menu_option == 1:
-        execute_sql("queries/destinations.sql")
+        execute_sql("CM500292--Databases-Coursework\queries\destinations.sql")
         destination_menu()
     elif menu_option == 2:
         pilot_menu()
@@ -180,7 +205,7 @@ def main_menu():
 
 try:
     # Connects to the database
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('CM500292--Databases-Coursework\database.db')
     print("\n Connecting to Database...")
     c = conn.cursor()
     # Checks whether the database is populated
