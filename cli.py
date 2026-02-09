@@ -53,6 +53,30 @@ def execute_alter_sql(filename, params):
         print("Input error: ", e)
         raise
 
+def pilot_menu():
+    print("\n Pilot Menu")
+    print(" 1. View Pilot Roster")
+    print(" 2. Search for a Pilot")
+    print(" 3. Add a pilot")
+    print(" 4. Remove a pilot")
+    print(" 0. Return to Main Menu")
+    
+    menu_option = int(input("\nEnter menu option: "))
+
+    if menu_option == 1:
+        execute_sql("pilot_roster.sql")
+        pilot_menu()
+    elif menu_option == 2:
+        pilot_menu()
+    elif menu_option == 3:
+        add_pilot()
+    elif menu_option == 4:
+        delete_pilot()  
+    elif menu_option == 0:
+        main_menu()
+    else:
+        print("\n Invalid Input")
+
 def add_pilot():
     name = input("Enter pilot name: ")
     while True:
@@ -127,25 +151,6 @@ def delete_pilot():
                 print("Invalid input, try again")
         except ValueError:
             print("Invalid input, try again.")
-    
-
-
-        
-         
-    
-# Used to populate an empty database by running each SQL command in the database.sql file
-# Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
-def populate_database():
-    # opens and reads the sql file to a buffer
-    fd = open('CM500292--Databases-Coursework\database.db', 'r')
-    sqlFile = fd.read()
-    fd.close()  
-    # executes all the commands in sequence
-    try:
-        c.executescript(sqlFile)
-        # handles any errors
-    except sqlite3.Error as e:
-        print("Population Error: ", e)
 
 def flight_menu():
     print("\n Flight Menu")
@@ -169,29 +174,7 @@ def flight_menu():
     else:
         print("\n Invalid Input")
     
-def pilot_menu():
-    print("\n Pilot Menu")
-    print(" 1. View Pilot Roster")
-    print(" 2. Search for a Pilot")
-    print(" 3. Add a pilot")
-    print(" 4. Remove a pilot")
-    print(" 0. Return to Main Menu")
-    
-    menu_option = int(input("\nEnter menu option: "))
 
-    if menu_option == 1:
-        execute_sql("pilot_roster.sql")
-        pilot_menu()
-    elif menu_option == 2:
-        pilot_menu()
-    elif menu_option == 3:
-        add_pilot()
-    elif menu_option == 4:
-        delete_pilot()  
-    elif menu_option == 0:
-        main_menu()
-    else:
-        print("\n Invalid Input")
     
 def destination_menu():
     print("\n Destination Menu")
@@ -208,11 +191,40 @@ def destination_menu():
     elif menu_option == 2:
         pilot_menu()
     elif menu_option == 3:
-        destination_menu()  
+        add_destination()  
     elif menu_option == 0:
         main_menu()
     else:
         print("\n Invalid Input")
+        
+def add_destination():
+    name = input("Enter airport name: ")
+    city = input("Enter airport city: ")
+    country = input("Enter airport country: ")
+    execute_sql("timezone.sql")
+    timezone = input("Enter airport timezone from the above list: ")
+    
+    print("\n Please review your input below.")
+    txt = f"Name: {name}\nCity: {city}\nCountry: {country}\nTimezone: {timezone}"
+    params = (name, city, country, timezone)
+    print(txt)
+    while True:
+        print("Press 1 to add the new destination to the database")
+        print("Press 2 to cancel the database entry.")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                execute_alter_sql("add_destination.sql", params)
+                destination_menu()
+                break
+            elif menu_option == 2:
+                print("\nTransaction Cancelled.")
+                destination_menu()
+                break
+            else:
+                print("Invalid input, try again.")
+        except ValueError:
+            print("Invalid input, try again.")
 
 def main_menu():
     print("\n Welcome to the Flight Management Database")
@@ -244,6 +256,18 @@ def main_menu():
     else:
         print("\n Invalid Input")
         main_menu()
+
+# Used to populate an empty database by running each SQL command in the database.sql file
+# Based on https://stackoverflow.com/questions/19472922/reading-external-sql-script-in-python
+def populate_database():
+    # opens and reads the sql file to a buffer
+    sql = load_sql(BASE_DIR, 'database.sql')
+    # executes all the commands in sequence
+    try:
+        c.executescript(sql)
+        # handles any errors
+    except sqlite3.Error as e:
+        print("Population Error: ", e)
 
 try:
     # Connects to the database
