@@ -1,0 +1,1 @@
+DELETE FROM flight WHERE flight_id = ?;

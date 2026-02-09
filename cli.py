@@ -172,7 +172,9 @@ def flight_menu():
     elif menu_option == 2:
         add_flight()
     elif menu_option == 3:
-        destination_menu()  
+        destination_menu()
+    elif menu_option == 4:
+        delete_flight()
     elif menu_option == 0:
         main_menu()
     else:
@@ -229,6 +231,34 @@ def add_flight():
             menu_option = int(input("Enter choice: "))
             if menu_option == 1:
                 execute_alter_sql("add_flight.sql", params)
+                flight_menu()
+                break
+            elif menu_option == 2:
+                print("\n Transaction Cancelled.")
+                flight_menu()
+                break
+            else:
+                print("Invalid input, try again")
+        except ValueError:
+            print("Invalid input, try again.")
+
+def delete_flight():
+    execute_sql("all_flight.sql")
+    delete_id = input("Enter the Flight ID of the flight you wish to delete")
+    try:
+        delete_id = int(delete_id)
+    except ValueError:
+            print("Flight ID must be a number.")
+    execute_param_sql("flight_id.sql", (delete_id,))
+    print("\n Is this the pilot you want to delete?")
+    while True:
+        print("If yes select 1")
+        print("If no press 2")
+        try:
+            menu_option = int(input("Enter choice: "))
+            if menu_option == 1:
+                execute_alter_sql("delete_flight.sql", (delete_id,))
+                print("flight deleted")
                 flight_menu()
                 break
             elif menu_option == 2:
