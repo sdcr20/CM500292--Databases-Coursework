@@ -4,10 +4,12 @@ from datetime import datetime
 from pathlib import Path
 from string import Template
 
+# Sets paths for different folders containing SQL queries
 BASE_DIR = Path(__file__).resolve().parent
 QUERIES_DIR = BASE_DIR / "queries"
 ALTERS_DIR = BASE_DIR / "alters"
 
+# Dictionary for use in pilot_search()
 PILOT_SEARCH_FIELDS = {
     "ID":"pilot.pilot_id",
     "Name":"pilot.name",
@@ -17,6 +19,7 @@ PILOT_SEARCH_FIELDS = {
     "Last Medical Date":"pilot.last_medical_date,"
 }
 
+# Dictionary for use in pilot_update()
 PILOT_UPDATE_FIELDS = {
     "Name":("name", "TEXT"),
     "Licence Number":("licence_number", "TEXT"),
@@ -25,6 +28,7 @@ PILOT_UPDATE_FIELDS = {
     "Last Medical Date":("last_medical_date," "TEXT"),
 }
 
+# Defines cases for use in validate_fields
 INT_FIELDS = {
     "Base Airport ID",
     "Departure Airport ID",
@@ -38,6 +42,7 @@ DATE_TIME_FIELDS = {
     "Arrival Date/Time",
 }
 
+# Dictionary for use in flight_search()
 FLIGHT_SEARCH_FIELDS = {
     "ID":"flight.flight_id",
     "Flight Number":"flight.flight_number",
@@ -48,6 +53,7 @@ FLIGHT_SEARCH_FIELDS = {
     "Arrival Date/Time":"arrival_time_utc",
 }
 
+# Dictionary for use in flight_update()
 FLIGHT_UPDATE_FIELDS = {
     "Flight Number":("flight_number", "TEXT"),
     "Departure Airport ID":("departure_id", "INTEGER"),
@@ -57,6 +63,7 @@ FLIGHT_UPDATE_FIELDS = {
     "Arrival Date/Time":("arrival_time_utc", "TEXT"),
 }
 
+# Dictionary for use in destination_search()
 DESTINATION_SEARCH_FIELDS = {
     "ID":"destination.destination_id",
     "Airport Name":"destination.name",
@@ -65,6 +72,7 @@ DESTINATION_SEARCH_FIELDS = {
     "Timezone":"destination.timezone",
 }
 
+# Dictionary for use in destination_update()
 DESTINATION_UPDATE_FIELDS = {
     "Name":("name", "TEXT"),
     "City":("city", "TEXT"),
@@ -72,7 +80,9 @@ DESTINATION_UPDATE_FIELDS = {
     "Timezone":("timezone", "TEXT"),
 }
 
+# Validates the fields used by the update() functions 
 def validate_fields(field_label, new_value):
+    # Entry validaton for ints
     if field_label in INT_FIELDS:
         try:
             return int(new_value)
@@ -80,7 +90,7 @@ def validate_fields(field_label, new_value):
             print(f"\n{field_label} must be a number.")
             print("Returning to main menu...")
             main_menu()
-            
+    # Entry validation for dates        
     if field_label in DATE_FIELDS:
         try:
             datetime.strptime(new_value.strip(), "%Y-%m-%d")
@@ -89,6 +99,7 @@ def validate_fields(field_label, new_value):
             print(f"\n{field_label} must be in the format YYYY-MM-DD.")
             print("Returning to main menu...")
             main_menu()
+    # Entry validation for datetime fields
     if field_label in DATE_TIME_FIELDS:
         try:
             datetime.strptime(new_value.strip(), "%Y-%m-%d %HH:%MM:%SS")
@@ -99,7 +110,7 @@ def validate_fields(field_label, new_value):
             main_menu()
     return new_value.strip()
     
-
+# Helper function to print results
 def print_results(rows):
     if not rows:
         print("No results.")
@@ -108,12 +119,9 @@ def print_results(rows):
         rows = [dict(r) for r in rows]
     print(tabulate(rows, headers="keys", tablefmt="grid"))
 
+# Reads a sql script
 def load_sql(sql_dir: Path, filename: str) -> str:
-    path = sql_dir / filename
-    return path.read_text().strip()
-
-def load_db(db_dir: Path, filename: str) -> str:
-    path = db_dir / filename
+    path = sql_dir / filename # uses path to allow definition of script by filename alone.
     return path.read_text().strip()
 
 # executes sql queries by opening files. Used for fixed queries. Prints out the results. 
@@ -121,13 +129,8 @@ def execute_sql(filename):
     sql = load_sql(QUERIES_DIR, filename)   
     try: 
         c.execute(sql)        
-        if c.description is not None:    
-            column_names = [description[0] for description in c.description]
-            rows = c.fetchall()
-            table = tabulate(rows, headers=column_names, tablefmt="grid")
-            print(table)
-        else:
-            print("The query did not return any results.")
+        rows = c.fetchall()
+        print_results(rows)
     except sqlite3.Error as e:
         print("Query error: ", e)
 
@@ -135,13 +138,8 @@ def execute_param_sql(filename, param):
     sql = load_sql(QUERIES_DIR, filename)   
     try: 
         c.execute(sql, param)        
-        if c.description is not None:    
-            column_names = [description[0] for description in c.description]
-            rows = c.fetchall()
-            table = tabulate(rows, headers=column_names, tablefmt="grid")
-            print(table)
-        else:
-            print("The query did not return any results.")
+        rows = c.fetchall()
+        print_results(rows)
     except sqlite3.Error as e:
         print("Query error: ", e)
 
