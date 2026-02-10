@@ -17,6 +17,24 @@ PILOT_SEARCH_FIELDS = {
     "Last Medical Date":"pilot.last_medical_date,"
 }
 
+FLIGHT_SEARCH_FIELDS = {
+    "ID":"flight.flight_id",
+    "Flight Number":"flight.flight_number",
+    "Departure ID":"flight.departure_id",
+    "Arrival ID":"flight.arrival_id",
+    "Pilot ID":"flight.pilot_id",
+    "Departure Date/Time":"departure_time_utc",
+    "Arrival Date/Time":"arrival_time_utc",
+}
+
+DESTINATION_SEARCH_FIELDS = {
+    "ID":"destination.destination_id",
+    "Airport Name":"destination.name",
+    "City":"destination.city",
+    "Country":"destination.country",
+    "Timezone":"destination.timezone",
+}
+
 def print_results(rows):
     if not rows:
         print("No results.")
@@ -240,7 +258,7 @@ def flight_menu():
             add_flight()
             break
         elif menu_option == 3:
-            destination_menu()
+            search_flight_prompt()
             break
         elif menu_option == 4:
             delete_flight()
@@ -250,6 +268,41 @@ def flight_menu():
             break
         else:
             print("\n Invalid Input")
+
+def search_flight(field_label: str, value: str, *, partial: bool = False):
+    column = FLIGHT_SEARCH_FIELDS.get(field_label)
+    if not column:
+        raise ValueError(f"Unsupported search field {field_label}")
+    if partial:
+        where_clause = f"WHERE {column} LIKE ?"
+        params = (f"%{value}%",)
+    else:
+        where_clause = f"WHERE {column} = ?"
+        params = (value,)
+    
+    sql_text = load_sql(QUERIES_DIR, "flight_search.sql")
+    sql = Template(sql_text).substitute(where_clause=where_clause)
+    try:
+        c.execute(sql, params)
+        return c.fetchall()
+    except sqlite3.Error as e:
+        print("Query error: ", e)
+        return[]
+
+def search_flight_prompt():
+    print("Search by: ")
+    for i, label in enumerate(FLIGHT_SEARCH_FIELDS.keys(), start=1):
+        print(f"{i}. {label}")
+    choice = int(input("Choose seach field: "))
+    field_label = list(FLIGHT_SEARCH_FIELDS.keys())[choice-1]
+    value = input(f"Enter value for {field_label}: ").strip()
+    partial = False
+    if field_label not in {"Flight ID"}:
+        use_partial = input("Partial match? (Y/N): ").lower()
+        partial = (use_partial == "y")
+        rows = search_flight(field_label, value, partial=partial)
+        print_results(rows)
+        flight_menu()
             
 def add_flight():
     number = input("Enter flight number: ")
@@ -361,7 +414,7 @@ def destination_menu():
             destination_menu()
             break
         elif menu_option == 2:
-            pilot_menu()
+            search_destination_prompt()
             break
         elif menu_option == 3:
             add_destination()
@@ -374,6 +427,41 @@ def destination_menu():
             break
         else:
             print("\n Invalid Input")
+
+def search_destination(field_label: str, value: str, *, partial: bool = False):
+    column = DESTINATION_SEARCH_FIELDS.get(field_label)
+    if not column:
+        raise ValueError(f"Unsupported search field {field_label}")
+    if partial:
+        where_clause = f"WHERE {column} LIKE ?"
+        params = (f"%{value}%",)
+    else:
+        where_clause = f"WHERE {column} = ?"
+        params = (value,)
+    
+    sql_text = load_sql(QUERIES_DIR, "destination_search.sql")
+    sql = Template(sql_text).substitute(where_clause=where_clause)
+    try:
+        c.execute(sql, params)
+        return c.fetchall()
+    except sqlite3.Error as e:
+        print("Query error: ", e)
+        return[]
+
+def search_destination_prompt():
+    print("Search by: ")
+    for i, label in enumerate(DESTINATION_SEARCH_FIELDS.keys(), start=1):
+        print(f"{i}. {label}")
+    choice = int(input("Choose seach field: "))
+    field_label = list(DESTINATION_SEARCH_FIELDS.keys())[choice-1]
+    value = input(f"Enter value for {field_label}: ").strip()
+    partial = False
+    if field_label not in {"Destination ID"}:
+        use_partial = input("Partial match? (Y/N): ").lower()
+        partial = (use_partial == "y")
+        rows = search_destination(field_label, value, partial=partial)
+        print_results(rows)
+        destination_menu()
         
 def add_destination():
     name = input("Enter airport name: ")
