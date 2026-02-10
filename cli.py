@@ -26,14 +26,16 @@ PILOT_UPDATE_FIELDS = {
 }
 
 INT_FIELDS = {
-    "Base Airport ID"
+    "Base Airport ID",
+    "Departure Airport ID",
+    "Arrival Airport ID",
 }
 DATE_FIELDS = {
-    "Last Medical Date"
+    "Last Medical Date",
 }
 DATE_TIME_FIELDS = {
     "Departure Date/Time",
-    "Arrival Date/Time"
+    "Arrival Date/Time",
 }
 
 FLIGHT_SEARCH_FIELDS = {
@@ -44,6 +46,15 @@ FLIGHT_SEARCH_FIELDS = {
     "Pilot ID":"flight.pilot_id",
     "Departure Date/Time":"departure_time_utc",
     "Arrival Date/Time":"arrival_time_utc",
+}
+
+FLIGHT_UPDATE_FIELDS = {
+    "Flight Number":("flight_number", "TEXT"),
+    "Departure Airport ID":("departure_id", "INTEGER"),
+    "Arrival Airport ID":("arrival_id", "INTEGER"),
+    "Pilot ID":("pilot_id", "INTEGER"),
+    "Departure Date/Time":("departure_time_utc", "TEXT"),
+    "Arrival Date/Time":("arrival_time_utc", "TEXT"),
 }
 
 DESTINATION_SEARCH_FIELDS = {
@@ -59,19 +70,26 @@ def validate_fields(field_label, new_value):
         try:
             return int(new_value)
         except ValueError:
-            raise ValueError(f"{field_label} must be a number.")
+            print(f"\n{field_label} must be a number.")
+            print("Returning to main menu...")
+            main_menu()
+            
     if field_label in DATE_FIELDS:
         try:
             datetime.strptime(new_value.strip(), "%Y-%m-%d")
             return new_value.strip()
         except ValueError:
-            raise ValueError(f"{field_label} must be in the format YYYY-MM-DD.")
+            print(f"\n{field_label} must be in the format YYYY-MM-DD.")
+            print("Returning to main menu...")
+            main_menu()
     if field_label in DATE_TIME_FIELDS:
         try:
             datetime.strptime(new_value.strip(), "%Y-%m-%d %HH:%MM:%SS")
             return new_value.strip()
         except ValueError:
-            raise ValueError(f"{field_label} must be in the format YYYY-MM-DD HH:MM:SS")
+            print(f"\n{field_label} must be in the format YYYY-MM-DD HH:MM:SS")
+            print("Returning to main menu...")
+            main_menu()
     return new_value.strip()
     
 
@@ -367,11 +385,76 @@ def flight_menu():
         elif menu_option == 4:
             delete_flight()
             break
+        elif menu_option == 5:
+            update_flight_prompt()
+            break
         elif menu_option == 0:
             main_menu()
             break
         else:
             print("\n Invalid Input")
+
+def update_flight(flight_id, field_label, new_value):
+    mapping = FLIGHT_UPDATE_FIELDS.get(field_label)
+    if not mapping:
+        raise ValueError(f"Unsupported field: {field_label}")
+    column, _kind = mapping
+    validated = validate_fields(field_label, new_value)
+    
+    sql_text = load_sql(ALTERS_DIR, "update_flight.sql")
+    set_clause = f"{column} = :value"
+    where_clause = "WHERE flight.flight_id = :flight_id"
+    sql = Template(sql_text).substitute(set_clause=set_clause, where_clause=where_clause)
+    
+    try:
+        c.execute(sql, {"value": validated, "flight_id": flight_id})
+        c.connection.commit()
+        if c.rowcount == 0:
+            print("No flight updated, flight ID not found")
+            return False
+        print(f"Updated {field_label} for Flight ID {flight_id}.")
+        return True
+    except sqlite3.IntegrityError as e:
+        msg = str(e).lower()
+        if "foreign key constraint failed" and "departure_id" in msg:
+            print("Error: departure id must reference an existing airport.")
+        elif "foreign key constraint failed" and "arrival_id" in msg:
+            print("Error: arrival id must reference an existing airport.")
+        elif "foreign key constraint failed" and "pilot" in msg:
+            print("Error: pilot id must reference an existing pilot.")
+        else:
+            print("Integrity Error", e)
+        return False
+    
+def update_flight_prompt():
+    while True:
+        try:
+            flight_id = int(input("Enter Flight ID to update: "))
+            break
+        except ValueError:
+            print("Flight ID must be a number.")
+    
+    execute_param_sql("flight_id.sql", (flight_id,))        
+    labels = list(FLIGHT_UPDATE_FIELDS.keys())
+    print("\nWhich field do you want to update?")
+    for i, label in enumerate(labels, start=1):
+        print(f"{i}. {label}")
+    while True:
+        try:
+            choice = int(input("Enter choice: "))
+            field_label = labels[choice-1]
+            break
+        except(ValueError, IndexError):
+            print("Invalid choice.")
+            
+    new_value = input(f"Enter new value for {field_label}: ").strip()
+    
+    ok = update_flight(flight_id, field_label, new_value)
+    
+    if ok:
+        rows = execute_param_sql("flight_id.sql", (flight_id,))
+        print_results(rows)
+        flight_menu()
 
 def search_flight(field_label: str, value: str, *, partial: bool = False):
     column = FLIGHT_SEARCH_FIELDS.get(field_label)
