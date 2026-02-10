@@ -2,14 +2,28 @@ import sqlite3
 from tabulate import tabulate 
 from datetime import datetime
 from pathlib import Path
+from string import Template
 
 BASE_DIR = Path(__file__).resolve().parent
 QUERIES_DIR = BASE_DIR / "queries"
 ALTERS_DIR = BASE_DIR / "alters"
 
-class DuplicateLicenceNumberException:
-    """Raised when a licence number already exists"""
-    pass
+PILOT_SEARCH_FIELDS = {
+    "ID":"pilot.pilot_id",
+    "Name":"pilot.name",
+    "Licence Number":"pilot.licence_number",
+    "Aircraft Rating":"pilot.aircraft_rating",
+    "Base Airport ID":"pilot.base_id",
+    "Last Medical Date":"pilot.last_medical_date,"
+}
+
+def print_results(rows):
+    if not rows:
+        print("No results.")
+        return
+    if isinstance(rows[0], sqlite3.Row):
+        rows = [dict(r) for r in rows]
+    print(tabulate(rows, headers="keys", tablefmt="grid"))
 
 def load_sql(sql_dir: Path, filename: str) -> str:
     path = sql_dir / filename
@@ -77,7 +91,7 @@ def pilot_menu():
             pilot_menu()
             break
         elif menu_option == 2:
-            pilot_menu()
+            search_pilot_prompt()
             break
         elif menu_option == 3:
             add_pilot()
@@ -90,6 +104,43 @@ def pilot_menu():
             break
         else:
             print("\n Invalid Input")
+            
+def search_pilot(field_label: str, value: str, *, partial: bool = False):
+    column = PILOT_SEARCH_FIELDS.get(field_label)
+    if not column:
+        raise ValueError(f"Unsupported search field {field_label}")
+    if partial:
+        where_clause = f"WHERE {column} LIKE ?"
+        params = (f"%{value}%",)
+    else:
+        where_clause = f"WHERE {column} = ?"
+        params = (value,)
+    
+    sql_text = load_sql(QUERIES_DIR, "pilot_search.sql")
+    sql = Template(sql_text).substitute(where_clause=where_clause)
+    try:
+        c.execute(sql, params)
+        return c.fetchall()
+    except sqlite3.Error as e:
+        print("Query error: ", e)
+        return[]
+
+def search_pilot_prompt():
+    print("Search by: ")
+    for i, label in enumerate(PILOT_SEARCH_FIELDS.keys(), start=1):
+        print(f"{i}. {label}")
+    choice = int(input("Choose seach field: "))
+    field_label = list(PILOT_SEARCH_FIELDS.keys())[choice-1]
+    
+    value = input(f"Enter value for {field_label}: ").strip()
+    
+    partial = False
+    if field_label not in {"Pilot ID"}:
+        use_partial = input("Partial match? (Y/N): ").lower()
+        partial = (use_partial == "y")
+        rows = search_pilot(field_label, value, partial=partial)
+        print_results(rows)
+        pilot_menu()
 
 def add_pilot():
     name = input("Enter pilot name: ")
@@ -290,8 +341,6 @@ def delete_flight():
         except ValueError:
             print("Invalid input, try again.")
     
-
-    
 def destination_menu():
     print("\n Destination Menu")
     print(" 1. View Destinations")
@@ -417,8 +466,7 @@ def main_menu():
             print("Goodbye\n")
             exit(0)
         elif menu_option == 4:
-            sqlfile = input("Enter filename: ")
-            execute_sql(sqlfile)
+            search_pilot_prompt()
             break
         else:
             print("\n Invalid Input")
@@ -438,8 +486,9 @@ def populate_database():
 
 try:
     # Connects to the database
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('CM500292--Databases-Coursework\database.db')
     print("\n Connecting to Database...")
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
     # Checks whether the database is populated
     c.execute("SELECT name FROM sqlite_master WHERE type='table';")
