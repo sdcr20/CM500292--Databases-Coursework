@@ -17,6 +17,25 @@ PILOT_SEARCH_FIELDS = {
     "Last Medical Date":"pilot.last_medical_date,"
 }
 
+PILOT_UPDATE_FIELDS = {
+    "Name":("name", "TEXT"),
+    "Licence Number":("licence_number", "TEXT"),
+    "Aircraft Rating":("aircraft_rating", "TEXT"),
+    "Base Airport ID":("base_id", "INTEGER"),
+    "Last Medical Date":("last_medical_date," "TEXT"),
+}
+
+INT_FIELDS = {
+    "Base Airport ID"
+}
+DATE_FIELDS = {
+    "Last Medical Date"
+}
+DATE_TIME_FIELDS = {
+    "Departure Date/Time",
+    "Arrival Date/Time"
+}
+
 FLIGHT_SEARCH_FIELDS = {
     "ID":"flight.flight_id",
     "Flight Number":"flight.flight_number",
@@ -34,6 +53,27 @@ DESTINATION_SEARCH_FIELDS = {
     "Country":"destination.country",
     "Timezone":"destination.timezone",
 }
+
+def validate_fields(field_label, new_value):
+    if field_label in INT_FIELDS:
+        try:
+            return int(new_value)
+        except ValueError:
+            raise ValueError(f"{field_label} must be a number.")
+    if field_label in DATE_FIELDS:
+        try:
+            datetime.strptime(new_value.strip(), "%Y-%m-%d")
+            return new_value.strip()
+        except ValueError:
+            raise ValueError(f"{field_label} must be in the format YYYY-MM-DD.")
+    if field_label in DATE_TIME_FIELDS:
+        try:
+            datetime.strptime(new_value.strip(), "%Y-%m-%d %HH:%MM:%SS")
+            return new_value.strip()
+        except ValueError:
+            raise ValueError(f"{field_label} must be in the format YYYY-MM-DD HH:MM:SS")
+    return new_value.strip()
+    
 
 def print_results(rows):
     if not rows:
@@ -95,6 +135,7 @@ def pilot_menu():
     print(" 2. Search for a Pilot")
     print(" 3. Add a pilot")
     print(" 4. Remove a pilot")
+    print(" 5. Amend a pilot")
     print(" 0. Return to Main Menu")
     
     while True:
@@ -117,6 +158,9 @@ def pilot_menu():
         elif menu_option == 4:
             delete_pilot()
             break  
+        elif menu_option == 5:
+            update_pilot_prompt()
+            break
         elif menu_option == 0:
             main_menu()
             break
@@ -157,6 +201,66 @@ def search_pilot_prompt():
         use_partial = input("Partial match? (Y/N): ").lower()
         partial = (use_partial == "y")
         rows = search_pilot(field_label, value, partial=partial)
+        print_results(rows)
+        pilot_menu()
+        
+def update_pilot(pilot_id, field_label, new_value):
+    mapping = PILOT_UPDATE_FIELDS.get(field_label)
+    if not mapping:
+        raise ValueError(f"Unsupported field: {field_label}")
+    column, _kind = mapping
+    validated = validate_fields(field_label, new_value)
+    
+    sql_text = load_sql(ALTERS_DIR, "update_pilot.sql")
+    set_clause = f"{column} = :value"
+    where_clause = "WHERE pilot.pilot_id = :pilot_id"
+    sql = Template(sql_text).substitute(set_clause=set_clause, where_clause=where_clause)
+    
+    try:
+        c.execute(sql, {"value": validated, "pilot_id": pilot_id})
+        c.connection.commit()
+        if c.rowcount == 0:
+            print("No pilot updated, pilot ID not found")
+            return False
+        print(f"Updated {field_label} for Pilot ID {pilot_id}.")
+        return True
+    except sqlite3.IntegrityError as e:
+        msg = str(e).lower()
+        if "unique constraint failed" in msg and "pilot.licence_number" in msg:
+            print("Error: licence number must be unique.")
+        elif "foreign key constraint failed" in msg:
+            print("Error: base id must reference an existing airport.")
+        else:
+            print("Integrity Error", e)
+        return False
+    
+def update_pilot_prompt():
+    while True:
+        try:
+            pilot_id = int(input("Enter Pilot ID to update: "))
+            break
+        except ValueError:
+            print("Pilot ID must be a number.")
+    
+    execute_param_sql("pilot_id.sql", (pilot_id,))        
+    labels = list(PILOT_UPDATE_FIELDS.keys())
+    print("\nWhich field do you want to update?")
+    for i, label in enumerate(labels, start=1):
+        print(f"{i}. {label}")
+    while True:
+        try:
+            choice = int(input("Enter choice: "))
+            field_label = labels[choice-1]
+            break
+        except(ValueError, IndexError):
+            print("Invalid choice.")
+            
+    new_value = input(f"Enter new value for {field_label}: ").strip()
+    
+    ok = update_pilot(pilot_id, field_label, new_value)
+    
+    if ok:
+        rows = execute_param_sql("pilot_id.sql", (pilot_id,))
         print_results(rows)
         pilot_menu()
 
