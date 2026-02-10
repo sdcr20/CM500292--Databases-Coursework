@@ -65,6 +65,13 @@ DESTINATION_SEARCH_FIELDS = {
     "Timezone":"destination.timezone",
 }
 
+DESTINATION_UPDATE_FIELDS = {
+    "Name":("name", "TEXT"),
+    "City":("city", "TEXT"),
+    "Country":("country", "TEXT"),
+    "Timezone":("timezone", "TEXT"),
+}
+
 def validate_fields(field_label, new_value):
     if field_label in INT_FIELDS:
         try:
@@ -363,6 +370,7 @@ def flight_menu():
     print(" 2. Add a New Flight")
     print(" 3. Search for Flights")
     print(" 4. Remove a Flight")
+    print(" 5. Update a Flight")
     print(" 0. Return to Main Menu")
     
     while True:
@@ -587,6 +595,7 @@ def destination_menu():
     print(" 2. Search for a Destination")
     print(" 3. Add a Destination")
     print(" 4. Remove a Destination")
+    print(" 5. Update a Destination")
     print(" 0. Return to Main Menu")
     
     while True:
@@ -609,11 +618,68 @@ def destination_menu():
         elif menu_option == 4:
             delete_destination()
             break 
+        elif menu_option == 5:
+            update_destination_prompt()
+            break
         elif menu_option == 0:
             main_menu()
             break
         else:
             print("\n Invalid Input")
+            
+def update_destination(destination_id, field_label, new_value):
+    mapping = DESTINATION_UPDATE_FIELDS.get(field_label)
+    if not mapping:
+        raise ValueError(f"Unsupported field: {field_label}")
+    column, _kind = mapping
+    validated = validate_fields(field_label, new_value)
+    
+    sql_text = load_sql(ALTERS_DIR, "update_destination.sql")
+    set_clause = f"{column} = :value"
+    where_clause = "WHERE destination.destination_id = :destination_id"
+    sql = Template(sql_text).substitute(set_clause=set_clause, where_clause=where_clause)
+    
+    try:
+        c.execute(sql, {"value": validated, "destination_id": destination_id})
+        c.connection.commit()
+        if c.rowcount == 0:
+            print("No destination updated, destination ID not found")
+            return False
+        print(f"Updated {field_label} for Destination ID {destination_id}.")
+        return True
+    except sqlite3.IntegrityError as e:
+            print("Integrity Error", e)
+            return False
+    
+def update_destination_prompt():
+    while True:
+        try:
+            destination_id = int(input("Enter Destination ID to update: "))
+            break
+        except ValueError:
+            print("Flight ID must be a number.")
+    
+    execute_param_sql("destination_id.sql", (destination_id,))        
+    labels = list(DESTINATION_UPDATE_FIELDS.keys())
+    print("\nWhich field do you want to update?")
+    for i, label in enumerate(labels, start=1):
+        print(f"{i}. {label}")
+    while True:
+        try:
+            choice = int(input("Enter choice: "))
+            field_label = labels[choice-1]
+            break
+        except(ValueError, IndexError):
+            print("Invalid choice.")
+            
+    new_value = input(f"Enter new value for {field_label}: ").strip()
+    
+    ok = update_destination(destination_id, field_label, new_value)
+    
+    if ok:
+        rows = execute_param_sql("destination_id.sql", (destination_id,))
+        print_results(rows)
+        flight_menu()
 
 def search_destination(field_label: str, value: str, *, partial: bool = False):
     column = DESTINATION_SEARCH_FIELDS.get(field_label)
