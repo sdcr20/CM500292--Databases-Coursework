@@ -74,8 +74,6 @@ VALUES
 ('X','-11:00:00','SST','Samoa Standard Time'),
 ('Y','-12:00:00','BIT','Baker Island Time');
 
-SELECT * FROM timezone;
-
 INSERT INTO destination (name, city, country, timezone)
 VALUES
 ('London Luton Airport','London','United Kingdom','Z'),
@@ -88,8 +86,6 @@ VALUES
 ('Václav Havel Airport Prague','Prague','Czech Republic','A'),
 ('Lisbon Humberto Delgado Airport','Lisbon','Portugal','Z'),
 ('Alicante–Elche Miguel Hernández Airport','Alicante','Spain','A');
-
-SELECT * FROM destination;
 
 INSERT INTO rating (rating_code, rating_name, aircraft)
 VALUES
@@ -105,8 +101,6 @@ VALUES
 ('ATR72','ATR 72 Type Rating','ATR 72'),
 ('A220','Airbus A220 Type Rating','Airbus A220');
 
-SELECT * FROM rating;
-
 INSERT INTO pilot (name, licence_number, aircraft_rating, base_id, last_medical_date)
 VALUES
 
@@ -120,8 +114,6 @@ VALUES
 ('Hannah Collins',200508,'E195',1,'2025-06-15'),
 ('Oliver Grant',200509,'B737',1,'2025-12-19'),
 ('Rebecca Moore',200510,'A220',1,'2025-09-27');
-
-SELECT * FROM pilot;
 
 INSERT INTO flight (flight_number, departure_id, arrival_id, pilot_id, departure_time_utc, arrival_time_utc)
 VALUES
@@ -147,5 +139,3 @@ VALUES
 ('LT2014', 9, 1, 7, '2026-02-20T09:55:00Z', '2026-02-20T12:45:00Z'),
 
 ('LT2015', 1, 10, 8, '2026-02-20T13:30:00Z', '2026-02-20T16:00:00Z');
-
-SELECT * FROM flight;
