@@ -1,6 +1,4 @@
-
-SELECT
-pilot_id AS "Pilot ID",
+SELECT pilot_id AS "Pilot ID",
 pilot.name AS "Name",
 pilot.licence_number AS "Licence Number",
 destination.name AS "Base Airport",
